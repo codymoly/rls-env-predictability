@@ -45,6 +45,7 @@ for (i in seq_along(rds_files_sorted)) {
   r_temp <- readRDS(rds_files_sorted[i])
   rasters[[i]] <- r_temp
 }
+rm(r_temp)
 
 
 # Create a RasterStack from the list of Rasters
@@ -56,7 +57,7 @@ missing_perc <- function(x) {
 }
 
 # Calculate percentage of missing data for each pixel
-raster_missing_perc <- terra::app(raster_stack, fun = missing_perc,cores=1)
+raster_missing_perc <- terra::app(raster_stack, fun = missing_perc,cores=5)
 
 # Plot percentage of missing data
 plot(raster_missing_perc)
@@ -84,17 +85,7 @@ message(paste("The data spans", num_days, "days, or approximately", round(num_ye
 
 library(envPred)
 
-###crop stack
-
-# Convert the raster stack to a dataframe
-#crop_extent <- terra::ext(c(-130, -128, -8, -6))
-#raster_stack_crop <- crop(raster_stack, crop_extent)
-#df <- terra::as.data.frame(raster_stack_crop, xy = TRUE, na.rm = FALSE)
-#first_raster <- crop(first_raster, crop_extent)
-
 df <- terra::as.data.frame(raster_stack, xy = TRUE, na.rm = FALSE)
-
-
 
 # Set the starting date and end date of the time series
 start_date <- as.Date("2022-01-01")
@@ -109,7 +100,6 @@ df_len =nrow(df)
 
 # Generate a dummy time series
 dummy_ts <- rnorm(length(dates))
-
 # Get the names of the variables that `env_stats()` returns
 env_stats_names <- names(env_stats(dummy_ts, dates = dates, noise_method = "spectrum", delta = 1))
 
@@ -138,38 +128,6 @@ for (i in 1:nrow(df)) {
 }
 # Combine the predictability results from the list into a single dataframe
 predictability_res <- do.call(rbind, env_pred_results)
-
-
-# 
-# library(foreach)
-# library(doParallel)
-# 
-# # Register the parallel backend
-# n_cores <- detectCores(logical = FALSE)  # Use all available cores
-# cl <- makeCluster(n_cores)
-# registerDoParallel(cl)
-# 
-# # Parallel loop
-# predictability_res <- foreach(i = 1:nrow(df), .combine = rbind, .packages = c("envPred")) %dopar% {
-#   pixel_ts <- as.numeric(df[i, -c(1, 2)])  # Remove x, y columns
-#   
-#   # If all values are NA, return a vector of NAs
-#   if(all(is.na(pixel_ts))) {
-#     pred <- rep(NA, length(colnames(predictability_df)))
-#     names(pred) <- colnames(predictability_df)
-#     pred["x"] <- df$x[i]
-#     pred["y"] <- df$y[i]
-#     return(pred)
-#   } else {
-#     # Otherwise, calculate the environmental stats
-#     pred <- env_stats(pixel_ts, dates = dates, noise_method = "spectrum", delta = 1)
-#     pred <- c(df$x[i], df$y[i], pred)  # Add the coordinates back to the data frame
-#     return(pred)
-#   }
-# }
-# 
-# # Stop the parallel backend
-# stopCluster(cl)
 
 predictability_df = cbind(x=df$x, y = df$y, predictability_res)
 

@@ -1,9 +1,9 @@
 #this script needs a folder with .nc files from copernicus for the whole world
 #it breaks up the .nc files in to 15°lat time 15°lon tiles
 #The tiles are then saved as terra raster in an .rds file
-#for each area a folder is created, e.g. "lon_-15_lat_-15"
+#for each area a folder is created, e.g. "lon_-15_lat_-15" 
 #in each of those folders the tiles are saved with date in the filename sst_20120101_lon_-15_lat_-15.rds
-
+#-> the filename indicates the bottom left corner of the tile
 # Packages
 library(terra)
 library(foreach)
@@ -32,7 +32,7 @@ results <- foreach(file_path = nc_files, .packages = "terra") %dopar% {
   # Select only the 'analysed_sst' layer
   analysed_sst <- sst_nc[["analysed_sst"]]
   
-  # We know from your example that your map's extent is global (xmin: -180, xmax: 180, ymin: -90, ymax: 90)
+  # The map's extent is global (xmin: -180, xmax: 180, ymin: -90, ymax: 90)
   # We need to iterate through the extents with a 15° step
   for (xmin in seq(-180, 165, by = 15)) {
     for (ymin in seq(-90, 75, by = 15)) {
